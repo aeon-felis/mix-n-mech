@@ -1,4 +1,6 @@
 use bevy::prelude::*;
+use bevy_pkv::PkvStore;
+use bevy_rapier2d::prelude::{NoUserData, RapierConfiguration, RapierPhysicsPlugin};
 use clap::Parser;
 use mix_n_mech::GamePlugin;
 #[derive(Parser, Debug)]
@@ -20,7 +22,7 @@ fn main() {
         ..Default::default()
     });
     app.add_plugins(DefaultPlugins);
-    //app.insert_resource(PkvStore::new("AeonFelis", "SignalScuffle"));
+    app.insert_resource(PkvStore::new("AeonFelis", "MixNMech"));
     app.add_plugin(bevy_egui::EguiPlugin);
     if args.editor {
         app.add_plugin(bevy_yoleck::YoleckPluginForEditor);
@@ -57,10 +59,10 @@ fn main() {
         is_editor: args.editor,
         start_at_level: args.level,
     });
-    //app.add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0));
-    //app.insert_resource(RapierConfiguration {
-    //gravity: Vec2::ZERO,
-    //..Default::default()
-    //});
+    app.add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(1.0));
+    app.insert_resource(RapierConfiguration {
+        gravity: 9.8 * Vec2::NEG_Y,
+        ..Default::default()
+    });
     app.run();
 }

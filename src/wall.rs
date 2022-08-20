@@ -1,7 +1,9 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeHandler};
 use serde::{Deserialize, Serialize};
 
+use crate::global_types::CameraInclude;
 use crate::yoleck_utils::GRANULARITY;
 
 pub struct WallPlugin;
@@ -40,9 +42,14 @@ fn populate(mut populate: YoleckPopulate<Wall>) {
                 custom_size: Some(data.size.as_vec2()),
                 ..Default::default()
             },
-            // transform: Transform::from_translation(data.position.extend(0.0)),
             ..Default::default()
         });
+        cmd.insert(CameraInclude);
+        cmd.insert(RigidBody::Fixed);
+        cmd.insert(Collider::cuboid(
+            data.size.x as f32 * 0.5,
+            data.size.y as f32 * 0.5,
+        ));
     });
 }
 
