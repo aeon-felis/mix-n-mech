@@ -1,8 +1,10 @@
+use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeHandler};
 use serde::{Deserialize, Serialize};
 
+use crate::global_types::IsPickable;
 use crate::loading::GameAssets;
 
 pub struct RobotPartPlugin;
@@ -34,7 +36,7 @@ fn default_type() -> RobotPartType {
 }
 
 fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAssets>) {
-    populate.populate(|_ctx, data, mut cmd| {
+    populate.populate(|ctx, data, mut cmd| {
         cmd.insert_bundle(SpriteBundle {
             sprite: Sprite {
                 color: data.part_type.color(),
@@ -49,6 +51,10 @@ fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAsset
         cmd.insert(ColliderMassProperties::Density(100.0));
         cmd.insert(Velocity::default());
         cmd.insert(LockedAxes::ROTATION_LOCKED);
+
+        if !ctx.is_in_editor() {
+            data.part_type.fill_components(&mut cmd);
+        }
     });
 }
 
@@ -90,6 +96,15 @@ impl RobotPartType {
         match self {
             RobotPartType::Hover => Color::BLUE,
             RobotPartType::Laser => Color::YELLOW,
+        }
+    }
+
+    fn fill_components(&self, cmd: &mut EntityCommands) {
+        match self {
+            RobotPartType::Hover => {}
+            RobotPartType::Laser => {
+                cmd.insert(IsPickable::default());
+            }
         }
     }
 }

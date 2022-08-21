@@ -2,14 +2,19 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::{ActionState, InputManagerPlugin};
 
-use crate::global_types::{AppState, InputBinding};
+use crate::global_types::{AppState, InputBinding, IsPickable};
+use crate::utils::some_or;
 
 pub struct PlayerControlPlugin;
 
 impl Plugin for PlayerControlPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(InputManagerPlugin::<InputBinding>::default());
-        app.add_system_set(SystemSet::on_update(AppState::Game).with_system(control_player));
+        app.add_system_set({
+            SystemSet::on_update(AppState::Game)
+                .with_system(control_player)
+                .with_system(control_pickup)
+        });
         app.insert_resource(PlayerMovementSettings {
             max_speed: 10.0,
             impulse_exponent: 4.0,
@@ -32,6 +37,7 @@ pub struct PlayerControl {
     mid_jump: bool,
     last_stood_on: Vec2,
     stood_on_potential: f32,
+    carrying: Option<Entity>,
 }
 
 impl Default for PlayerControl {
@@ -40,6 +46,7 @@ impl Default for PlayerControl {
             mid_jump: false,
             last_stood_on: Vec2::Y,
             stood_on_potential: 0.0,
+            carrying: None,
         }
     }
 }
@@ -81,24 +88,7 @@ fn control_player(
         }
 
         let target_speed = movement_value;
-        let standing_on = rapier_context
-            .contacts_with(player_entity)
-            .filter(|contact| contact.raw.has_any_active_contact)
-            .filter_map(|contact| {
-                contact
-                    .manifolds()
-                    .filter_map(|contact_manifold| {
-                        if contact.collider1() == player_entity {
-                            Some(-contact_manifold.normal())
-                        } else if contact.collider2() == player_entity {
-                            Some(contact_manifold.normal())
-                        } else {
-                            None
-                        }
-                    })
-                    .max_by_key(|normal| float_ord::FloatOrd(normal.dot(Vec2::Y)))
-            })
-            .max_by_key(|normal| float_ord::FloatOrd(normal.dot(Vec2::Y)));
+        let standing_on = standing_on(&rapier_context, player_entity);
 
         enum JumpStatus {
             CanJump,
@@ -109,7 +99,7 @@ fn control_player(
         }
 
         let jump_status = (|| {
-            if let Some(standing_on) = standing_on {
+            if let Some((_, standing_on)) = standing_on {
                 player_control.last_stood_on = standing_on;
                 player_control.stood_on_potential = 1.0;
                 if 0.0 < standing_on.dot(Vec2::Y) {
@@ -207,4 +197,46 @@ fn control_player(
         }
         velocity.linvel += impulse;
     }
+}
+
+fn control_pickup(
+    mut player_query: Query<(&ActionState<InputBinding>, Entity, &mut PlayerControl)>,
+    mut pickable_query: Query<&mut IsPickable>,
+    rapier_context: Res<RapierContext>,
+) {
+    for (action_state, player_entity, player_control) in player_query.iter_mut() {
+        if !action_state.just_pressed(InputBinding::Pickup) {
+            continue;
+        }
+        let standing_on = standing_on(&rapier_context, player_entity);
+        if let Some(_pickable) = player_control.carrying {
+        } else if let Some((standing_on, _)) = standing_on {
+            let pickable = some_or!(pickable_query.get_mut(standing_on).ok(); continue);
+            info!(
+                "Should pick up {:?}, currently carried by {:?}",
+                standing_on, pickable.carried_by
+            );
+        }
+    }
+}
+
+fn standing_on(rapier_context: &RapierContext, entity: Entity) -> Option<(Entity, Vec2)> {
+    rapier_context
+        .contacts_with(entity)
+        .filter(|contact| contact.raw.has_any_active_contact)
+        .filter_map(|contact| {
+            contact
+                .manifolds()
+                .filter_map(|contact_manifold| {
+                    if contact.collider1() == entity {
+                        Some((contact.collider2(), -contact_manifold.normal()))
+                    } else if contact.collider2() == entity {
+                        Some((contact.collider1(), contact_manifold.normal()))
+                    } else {
+                        None
+                    }
+                })
+                .max_by_key(|(_, normal)| float_ord::FloatOrd(normal.dot(Vec2::Y)))
+        })
+        .max_by_key(|(_, normal)| float_ord::FloatOrd(normal.dot(Vec2::Y)))
 }

@@ -37,8 +37,7 @@ pub struct LevelProgress {
 // #[allow(dead_code)]
 pub enum InputBinding {
     Move,
-    // MoveVertical,
-    // Grab,
+    Pickup,
 }
 
 #[derive(Component)]
@@ -46,3 +45,8 @@ pub struct CameraInclude;
 
 #[derive(Component)]
 pub struct IsPlayer;
+
+#[derive(Component, Default)]
+pub struct IsPickable {
+    pub carried_by: Option<Entity>,
+}
