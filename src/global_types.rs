@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 use leafwing_input_manager::Actionlike;
 
-// #[derive(Clone, PartialEq)]
-// pub struct MenuActionForKbgp;
+#[derive(Clone, PartialEq)]
+pub struct MenuActionForKbgp;
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq)]
 pub enum AppState {
@@ -16,10 +16,10 @@ pub enum AppState {
 #[derive(Clone, Hash, Debug, PartialEq, Eq)]
 pub enum MenuState {
     Main,
-    // LevelSelect,
-    // Pause,
+    LevelSelect,
+    Pause,
     LevelCompleted,
-    // GameOver,
+    GameOver,
 }
 
 // #[derive(Debug, Clone, PartialEq, Eq, Hash, SystemLabel)]

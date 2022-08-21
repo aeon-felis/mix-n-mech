@@ -2,6 +2,7 @@ mod camera;
 mod global_types;
 mod level_progress;
 mod loading;
+mod menu;
 mod player;
 mod player_control;
 mod utils;
@@ -16,9 +17,12 @@ use self::camera::CameraPlugin;
 use self::global_types::{AppState, LevelProgress, MenuState};
 use self::level_progress::LevelProgressPlugin;
 use self::loading::LoadingPlugin;
+use self::menu::MenuPlugin;
 use self::player::PlayerPlugin;
 use self::player_control::PlayerControlPlugin;
 use self::wall::WallPlugin;
+
+pub use self::global_types::MenuActionForKbgp;
 
 pub struct GamePlugin {
     pub is_editor: bool,
@@ -44,7 +48,7 @@ impl Plugin for GamePlugin {
                 when_game: AppState::Game,
             });
         } else {
-            // app.add_plugin(MenuPlugin);
+            app.add_plugin(MenuPlugin);
             app.add_state(AppState::Menu(MenuState::Main));
             app.add_system_set(
                 SystemSet::on_enter(AppState::LoadLevel).with_system(handle_level_loading),

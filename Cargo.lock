@@ -227,6 +227,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy-egui-kbgp"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b51807867a96b2d0b3639ffa66511860b594196571a37652d2ffbb94e326c00"
+dependencies = [
+ "bevy",
+ "bevy_egui",
+]
+
+[[package]]
 name = "bevy-yoleck"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2438,6 +2448,7 @@ name = "mix-n-mech"
 version = "0.1.0"
 dependencies = [
  "bevy",
+ "bevy-egui-kbgp",
  "bevy-yoleck",
  "bevy_asset_loader",
  "bevy_egui",
