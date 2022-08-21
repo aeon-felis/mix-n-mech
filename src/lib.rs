@@ -5,6 +5,7 @@ mod loading;
 mod menu;
 mod player;
 mod player_control;
+mod robot_part;
 mod utils;
 mod wall;
 mod yoleck_utils;
@@ -20,6 +21,7 @@ use self::loading::LoadingPlugin;
 use self::menu::MenuPlugin;
 use self::player::PlayerPlugin;
 use self::player_control::PlayerControlPlugin;
+use self::robot_part::RobotPartPlugin;
 use self::wall::WallPlugin;
 
 pub use self::global_types::MenuActionForKbgp;
@@ -38,6 +40,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(LevelProgressPlugin);
         app.add_plugin(PlayerPlugin);
         app.add_plugin(WallPlugin);
+        app.add_plugin(RobotPartPlugin);
 
         app.add_plugin(PlayerControlPlugin);
 

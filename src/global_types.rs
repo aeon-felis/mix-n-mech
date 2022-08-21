@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use leafwing_input_manager::Actionlike;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct MenuActionForKbgp;
 
 #[derive(Clone, Hash, Debug, PartialEq, Eq)]
