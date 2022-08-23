@@ -50,3 +50,6 @@ pub struct IsPlayer;
 pub struct IsPickable {
     pub carried_by: Option<Entity>,
 }
+
+#[derive(Component)]
+pub struct HalfHeight(pub f32);

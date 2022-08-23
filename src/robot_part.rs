@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::*;
 use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeHandler};
 use serde::{Deserialize, Serialize};
 
-use crate::global_types::IsPickable;
+use crate::global_types::{HalfHeight, IsPickable};
 use crate::loading::GameAssets;
 
 pub struct RobotPartPlugin;
@@ -37,17 +37,19 @@ fn default_type() -> RobotPartType {
 
 fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAssets>) {
     populate.populate(|ctx, data, mut cmd| {
+        let part_height = data.part_type.height();
         cmd.insert_bundle(SpriteBundle {
             sprite: Sprite {
                 color: data.part_type.color(),
-                custom_size: Some(Vec2::new(1.0, data.part_type.height())),
+                custom_size: Some(Vec2::new(1.0, part_height)),
                 ..Default::default()
             },
             ..Default::default()
         });
+        cmd.insert(HalfHeight(0.5 * part_height));
 
         cmd.insert(RigidBody::Dynamic);
-        cmd.insert(Collider::cuboid(0.5, 0.5 * data.part_type.height()));
+        cmd.insert(Collider::cuboid(0.5, 0.5 * part_height));
         cmd.insert(ColliderMassProperties::Density(100.0));
         cmd.insert(Velocity::default());
         cmd.insert(LockedAxes::ROTATION_LOCKED);
