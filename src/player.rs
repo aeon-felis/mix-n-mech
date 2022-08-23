@@ -5,7 +5,7 @@ use leafwing_input_manager::prelude::{DualAxis, InputMap, VirtualDPad};
 use leafwing_input_manager::InputManagerBundle;
 use serde::{Deserialize, Serialize};
 
-use crate::global_types::{CameraInclude, HalfHeight, InputBinding, IsPlayer};
+use crate::global_types::{CameraInclude, Carrier, HalfHeight, InputBinding, IsPlayer};
 use crate::loading::GameAssets;
 use crate::player_control::PlayerControl;
 
@@ -44,6 +44,7 @@ fn populate(mut populate: YoleckPopulate<Player>, game_assets: Res<GameAssets>) 
         });
         cmd.insert(IsPlayer);
         cmd.insert(PlayerControl::default());
+        cmd.insert(Carrier::default());
         cmd.insert(CameraInclude);
         cmd.insert(HalfHeight(0.5));
 

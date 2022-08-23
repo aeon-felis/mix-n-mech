@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::*;
 use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeHandler};
 use serde::{Deserialize, Serialize};
 
-use crate::global_types::{HalfHeight, IsPickable};
+use crate::global_types::{HalfHeight, Pickable};
 use crate::loading::GameAssets;
 
 pub struct RobotPartPlugin;
@@ -105,7 +105,7 @@ impl RobotPartType {
         match self {
             RobotPartType::Hover => {}
             RobotPartType::Laser => {
-                cmd.insert(IsPickable::default());
+                cmd.insert(Pickable::default());
             }
         }
     }

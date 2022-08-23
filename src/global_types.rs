@@ -47,8 +47,13 @@ pub struct CameraInclude;
 pub struct IsPlayer;
 
 #[derive(Component, Default)]
-pub struct IsPickable {
+pub struct Pickable {
     pub carried_by: Option<Entity>,
+}
+
+#[derive(Component, Default)]
+pub struct Carrier {
+    pub carrying: Option<Entity>,
 }
 
 #[derive(Component)]

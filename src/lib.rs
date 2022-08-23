@@ -3,6 +3,8 @@ mod global_types;
 mod level_progress;
 mod loading;
 mod menu;
+mod parts_manipulation;
+mod physics_utils;
 mod player;
 mod player_control;
 mod robot_part;
@@ -19,6 +21,7 @@ use self::global_types::{AppState, LevelProgress, MenuState};
 use self::level_progress::LevelProgressPlugin;
 use self::loading::LoadingPlugin;
 use self::menu::MenuPlugin;
+use self::parts_manipulation::PartsManipulationPlugin;
 use self::player::PlayerPlugin;
 use self::player_control::PlayerControlPlugin;
 use self::robot_part::RobotPartPlugin;
@@ -43,6 +46,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(RobotPartPlugin);
 
         app.add_plugin(PlayerControlPlugin);
+        app.add_plugin(PartsManipulationPlugin);
 
         app.add_system(enable_disable_physics);
         if self.is_editor {
