@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::rapier::prelude::ContactManifold;
+use float_ord::FloatOrd;
 use leafwing_input_manager::prelude::{ActionState, InputManagerPlugin};
 
 use crate::global_types::{AppState, InputBinding, IsPickable};
@@ -88,7 +90,7 @@ fn control_player(
         }
 
         let target_speed = movement_value;
-        let standing_on = standing_on(&rapier_context, player_entity);
+        let standing_on = standing_on(&rapier_context, player_entity, |ed| ed.normal);
 
         enum JumpStatus {
             CanJump,
@@ -99,7 +101,7 @@ fn control_player(
         }
 
         let jump_status = (|| {
-            if let Some((_, standing_on)) = standing_on {
+            if let Some(standing_on) = standing_on {
                 player_control.last_stood_on = standing_on;
                 player_control.stood_on_potential = 1.0;
                 if 0.0 < standing_on.dot(Vec2::Y) {
@@ -208,19 +210,52 @@ fn control_pickup(
         if !action_state.just_pressed(InputBinding::Pickup) {
             continue;
         }
-        let standing_on = standing_on(&rapier_context, player_entity);
+        let standing_on = standing_on(&rapier_context, player_entity, |ed| {
+            let (offset_this, offset_that) = ed
+                .manifold
+                .points
+                .iter()
+                .map(|point| {
+                    let [this, that] = ed.maybe_swap([point.local_p1, point.local_p2]);
+                    (this.y, that.y)
+                })
+                .min_by_key(|(a, b)| (FloatOrd(*a), FloatOrd(-*b)))
+                .unwrap();
+            (offset_this, offset_that, ed.other)
+        });
         if let Some(_pickable) = player_control.carrying {
-        } else if let Some((standing_on, _)) = standing_on {
+        } else if let Some((offset_this, offset_that, standing_on)) = standing_on {
             let pickable = some_or!(pickable_query.get_mut(standing_on).ok(); continue);
             info!(
-                "Should pick up {:?}, currently carried by {:?}",
-                standing_on, pickable.carried_by
+                "Should pick up {:?}, currently carried by {:?}. Standing {} above it, it {} below me",
+                standing_on, pickable.carried_by, offset_that, offset_this,
             );
         }
     }
 }
 
-fn standing_on(rapier_context: &RapierContext, entity: Entity) -> Option<(Entity, Vec2)> {
+struct ExtractData<'a> {
+    pub normal: Vec2,
+    pub other: Entity,
+    should_swap: bool,
+    manifold: &'a ContactManifold,
+}
+
+impl ExtractData<'_> {
+    fn maybe_swap<T>(&self, items: [T; 2]) -> [T; 2] {
+        if self.should_swap {
+            let [a, b] = items;
+            [b, a]
+        } else {
+            items
+        }
+    }
+}
+fn standing_on<T>(
+    rapier_context: &RapierContext,
+    entity: Entity,
+    mut extract_dlg: impl FnMut(&ExtractData) -> T,
+) -> Option<T> {
     rapier_context
         .contacts_with(entity)
         .filter(|contact| contact.raw.has_any_active_contact)
@@ -228,15 +263,27 @@ fn standing_on(rapier_context: &RapierContext, entity: Entity) -> Option<(Entity
             contact
                 .manifolds()
                 .filter_map(|contact_manifold| {
-                    if contact.collider1() == entity {
-                        Some((contact.collider2(), -contact_manifold.normal()))
+                    let extract_data = if contact.collider1() == entity {
+                        ExtractData {
+                            normal: -contact_manifold.normal(),
+                            other: contact.collider2(),
+                            should_swap: false,
+                            manifold: contact_manifold.raw,
+                        }
                     } else if contact.collider2() == entity {
-                        Some((contact.collider1(), contact_manifold.normal()))
+                        ExtractData {
+                            normal: contact_manifold.normal(),
+                            other: contact.collider1(),
+                            should_swap: true,
+                            manifold: contact_manifold.raw,
+                        }
                     } else {
-                        None
-                    }
+                        return None;
+                    };
+                    Some((extract_dlg(&extract_data), extract_data.normal))
                 })
-                .max_by_key(|(_, normal)| float_ord::FloatOrd(normal.dot(Vec2::Y)))
+                .max_by_key(|(_, normal)| FloatOrd(normal.dot(Vec2::Y)))
         })
-        .max_by_key(|(_, normal)| float_ord::FloatOrd(normal.dot(Vec2::Y)))
+        .max_by_key(|(_, normal)| FloatOrd(normal.dot(Vec2::Y)))
+        .map(|(result, _)| result)
 }
