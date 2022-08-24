@@ -3,21 +3,26 @@ use bevy_rapier2d::prelude::*;
 use float_ord::FloatOrd;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::global_types::{AppState, Carrier, HalfHeight, InputBinding, Pickable};
+use crate::global_types::{AppState, Carrier, HalfHeight, InputBinding, IsMountBase, Pickable};
 use crate::physics_utils::standing_on;
-use crate::utils::some_or;
+use crate::utils::{entities_ordered_by_type, some_or};
 
 pub struct PartsManipulationPlugin;
 
 impl Plugin for PartsManipulationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system_set({ SystemSet::on_update(AppState::Game).with_system(control_pickup) });
+        app.add_system_set({
+            SystemSet::on_update(AppState::Game)
+                .with_system(control_pickup)
+                .with_system(detect_mounting)
+        });
     }
 }
 
 fn control_pickup(
-    mut player_query: Query<(&ActionState<InputBinding>, Entity, &mut Carrier)>,
+    mut player_query: Query<(&ActionState<InputBinding>, Entity), With<Carrier>>,
     mut pickable_query: Query<&mut Pickable>,
+    mut carrier_query: Query<&mut Carrier>,
     mut transform_query: Query<(&mut Transform, &HalfHeight)>,
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
@@ -34,7 +39,7 @@ fn control_pickup(
         })
     };
 
-    for (action_state, player_entity, mut carrier) in player_query.iter_mut() {
+    for (action_state, player_entity) in player_query.iter_mut() {
         if !action_state.just_pressed(InputBinding::Pickup) {
             continue;
         }
@@ -51,6 +56,7 @@ fn control_pickup(
                 .unwrap();
             (offset_this, offset_that, ed.other)
         });
+        let mut carrier = carrier_query.get_mut(player_entity).unwrap();
         if let Some(pickable_entity) = carrier.carrying {
             let mut pickable = pickable_query
                 .get_mut(pickable_entity)
@@ -69,8 +75,46 @@ fn control_pickup(
                     .insert(ImpulseJoint::new(player_entity, joint));
 
                 carrier.carrying = Some(pickable_entity);
+                if let Some(old_carrier_entity) = pickable.carried_by {
+                    let mut old_carrier = carrier_query
+                        .get_mut(old_carrier_entity)
+                        .expect("Pickable says it is carried by it");
+                    old_carrier.carrying = None;
+                }
                 pickable.carried_by = Some(player_entity);
             }
+        }
+    }
+}
+
+fn detect_mounting(
+    mut reader: EventReader<CollisionEvent>,
+    mut carrier_query: Query<(&mut Carrier, &HalfHeight), With<IsMountBase>>,
+    mut pickable_query: Query<(&mut Pickable, &HalfHeight)>,
+    mut commands: Commands,
+) {
+    for event in reader.iter() {
+        if let &CollisionEvent::Started(e1, e2, _) = event {
+            let [carrier_entity, pickable_entity] = some_or!(
+                entities_ordered_by_type!([e1, e2], carrier_query, pickable_query);
+                continue);
+            let (mut carrier, HalfHeight(carrier_hh)) =
+                carrier_query.get_mut(carrier_entity).unwrap();
+            if carrier.carrying.is_some() {
+                continue;
+            }
+            let (mut pickable, HalfHeight(pickable_hh)) =
+                pickable_query.get_mut(pickable_entity).unwrap();
+            if pickable.carried_by.is_some() {
+                continue;
+            }
+            carrier.carrying = Some(pickable_entity);
+            pickable.carried_by = Some(carrier_entity);
+            let joint = FixedJointBuilder::new()
+                .local_anchor1(Vec2::new(0.0, 0.01 + carrier_hh + pickable_hh));
+            commands
+                .entity(pickable_entity)
+                .insert(ImpulseJoint::new(carrier_entity, joint));
         }
     }
 }

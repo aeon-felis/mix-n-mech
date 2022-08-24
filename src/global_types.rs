@@ -57,4 +57,7 @@ pub struct Carrier {
 }
 
 #[derive(Component)]
+pub struct IsMountBase;
+
+#[derive(Component)]
 pub struct HalfHeight(pub f32);
