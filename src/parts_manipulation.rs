@@ -5,7 +5,9 @@ use bevy_rapier2d::prelude::*;
 use float_ord::FloatOrd;
 use leafwing_input_manager::prelude::ActionState;
 
-use crate::global_types::{AppState, Carrier, HalfHeight, InputBinding, IsMountBase, Pickable};
+use crate::global_types::{
+    Activatable, AppState, Carrier, HalfHeight, InputBinding, IsMountBase, Pickable,
+};
 use crate::physics_utils::standing_on;
 use crate::utils::{entities_ordered_by_type, some_or};
 
@@ -47,6 +49,19 @@ impl SwapPlaces<'_, '_> {
     }
 }
 
+#[derive(SystemParam)]
+struct Activator<'w, 's> {
+    query: Query<'w, 's, &'static mut Activatable>,
+}
+
+impl Activator<'_, '_> {
+    fn set(&mut self, entity: Entity, set_to: bool) {
+        if let Ok(mut activatable) = self.query.get_mut(entity) {
+            activatable.active = set_to;
+        }
+    }
+}
+
 fn control_pickup(
     mut player_query: Query<(&ActionState<InputBinding>, Entity), With<Carrier>>,
     mut pickable_query: Query<&mut Pickable>,
@@ -54,6 +69,7 @@ fn control_pickup(
     // mut swap_places: SwapPlaces,
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
+    mut activator: Activator,
 ) {
     for (action_state, player_entity) in player_query.iter_mut() {
         if !action_state.just_pressed(InputBinding::Pickup) {
@@ -83,6 +99,11 @@ fn control_pickup(
         } else if let Some((_offset_this, _offset_that, standing_on_entity)) = standing_on {
             let pickable = some_or!(pickable_query.get_mut(standing_on_entity).ok(); continue);
             let pickable_entity = standing_on_entity;
+
+            activator.set(pickable_entity, false);
+            if let Some(old_carrier_entity) = pickable.carried_by {
+                activator.set(old_carrier_entity, false);
+            }
             // if let Ok(_combined_half_height) = swap_places.swap_places(player_entity, pickable_entity) {
             // let joint = FixedJointBuilder::new()
             // .local_anchor1(Vec2::new(0.0, 0.01 + combined_half_height));
@@ -112,6 +133,7 @@ fn detect_mounting(
     mut reader: EventReader<CollisionEvent>,
     mut carrier_query: Query<(&mut Carrier, &HalfHeight), With<IsMountBase>>,
     mut pickable_query: Query<(&mut Pickable, &HalfHeight)>,
+    mut activator: Activator,
     mut commands: Commands,
 ) {
     for event in reader.iter() {
@@ -129,6 +151,8 @@ fn detect_mounting(
             if pickable.carried_by.is_some() {
                 continue;
             }
+            activator.set(pickable_entity, true);
+            activator.set(carrier_entity, true);
             carrier.carrying = Some(pickable_entity);
             pickable.carried_by = Some(carrier_entity);
             let joint = FixedJointBuilder::new()

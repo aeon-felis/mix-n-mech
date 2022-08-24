@@ -61,3 +61,8 @@ pub struct IsMountBase;
 
 #[derive(Component)]
 pub struct HalfHeight(pub f32);
+
+#[derive(Component)]
+pub struct Activatable {
+    pub active: bool,
+}

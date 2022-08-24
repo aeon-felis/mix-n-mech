@@ -4,7 +4,7 @@ use bevy_rapier2d::prelude::*;
 use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeHandler};
 use serde::{Deserialize, Serialize};
 
-use crate::global_types::{Carrier, HalfHeight, IsMountBase, Pickable};
+use crate::global_types::{Activatable, Carrier, HalfHeight, IsMountBase, Pickable};
 use crate::loading::GameAssets;
 
 pub struct RobotPartPlugin;
@@ -32,7 +32,7 @@ pub struct RobotPart {
 }
 
 fn default_type() -> RobotPartType {
-    RobotPartType::Hover
+    RobotPartType::Platform
 }
 
 fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAssets>) {
@@ -78,17 +78,19 @@ fn edit(mut edit: YoleckEdit<RobotPart>, mut _commands: Commands) {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum RobotPartType {
+    Platform,
     Hover,
     Laser,
 }
 
 impl RobotPartType {
     fn list() -> &'static [RobotPartType] {
-        &[Self::Hover, Self::Laser]
+        &[Self::Platform, Self::Hover, Self::Laser]
     }
 
     fn height(&self) -> f32 {
         match self {
+            RobotPartType::Platform => 0.2,
             RobotPartType::Hover => 0.2,
             RobotPartType::Laser => 0.6,
         }
@@ -96,6 +98,7 @@ impl RobotPartType {
 
     fn color(&self) -> Color {
         match self {
+            RobotPartType::Platform => Color::BEIGE,
             RobotPartType::Hover => Color::BLUE,
             RobotPartType::Laser => Color::YELLOW,
         }
@@ -103,13 +106,18 @@ impl RobotPartType {
 
     fn fill_components(&self, cmd: &mut EntityCommands) {
         match self {
+            RobotPartType::Platform => {
+                cmd.insert(Pickable::default());
+            }
             RobotPartType::Hover => {
                 cmd.insert(IsMountBase);
                 cmd.insert(Carrier::default());
                 cmd.insert(ActiveEvents::COLLISION_EVENTS);
+                cmd.insert(Activatable { active: false });
             }
             RobotPartType::Laser => {
                 cmd.insert(Pickable::default());
+                cmd.insert(Activatable { active: false });
             }
         }
     }
