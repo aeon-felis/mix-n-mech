@@ -133,6 +133,7 @@ fn detect_mounting(
     mut reader: EventReader<CollisionEvent>,
     mut carrier_query: Query<(&mut Carrier, &HalfHeight), With<IsMountBase>>,
     mut pickable_query: Query<(&mut Pickable, &HalfHeight)>,
+    mut transform_query: Query<&mut Transform>,
     mut activator: Activator,
     mut commands: Commands,
 ) {
@@ -151,6 +152,12 @@ fn detect_mounting(
             if pickable.carried_by.is_some() {
                 continue;
             }
+
+            let [mut pickable_transform, carrier_transform] = transform_query
+                .get_many_mut([pickable_entity, carrier_entity])
+                .unwrap();
+            pickable_transform.translation.x = carrier_transform.translation.x;
+
             activator.set(pickable_entity, true);
             activator.set(carrier_entity, true);
             carrier.carrying = Some(pickable_entity);

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::global_types::{Activatable, Carrier, HalfHeight, IsMountBase, Pickable};
 use crate::loading::GameAssets;
+use crate::part_behavior::HoverBehavior;
 
 pub struct RobotPartPlugin;
 
@@ -114,6 +115,7 @@ impl RobotPartType {
                 cmd.insert(Carrier::default());
                 cmd.insert(ActiveEvents::COLLISION_EVENTS);
                 cmd.insert(Activatable { active: false });
+                cmd.insert(HoverBehavior { range: 0.5 });
             }
             RobotPartType::Laser => {
                 cmd.insert(Pickable::default());
