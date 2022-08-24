@@ -1,3 +1,5 @@
+use bevy::ecs::query::QueryEntityError;
+use bevy::ecs::system::SystemParam;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use float_ord::FloatOrd;
@@ -13,22 +15,27 @@ impl Plugin for PartsManipulationPlugin {
     fn build(&self, app: &mut App) {
         app.add_system_set({
             SystemSet::on_update(AppState::Game)
+                .with_system(apply_carrying)
                 .with_system(control_pickup)
                 .with_system(detect_mounting)
         });
     }
 }
 
-fn control_pickup(
-    mut player_query: Query<(&ActionState<InputBinding>, Entity), With<Carrier>>,
-    mut pickable_query: Query<&mut Pickable>,
-    mut carrier_query: Query<&mut Carrier>,
-    mut transform_query: Query<(&mut Transform, &HalfHeight)>,
-    rapier_context: Res<RapierContext>,
-    mut commands: Commands,
-) {
-    let mut swap_places = |top, bottom| {
-        transform_query.get_many_mut([top, bottom]).map(move |query_result| {
+#[derive(Component)]
+struct ChangeCarrying {
+    carrier_entity: Entity,
+    old_carrier_entity: Option<Entity>,
+}
+
+#[derive(SystemParam)]
+struct SwapPlaces<'w, 's> {
+    query: Query<'w, 's, (&'static mut Transform, &'static HalfHeight)>,
+}
+
+impl SwapPlaces<'_, '_> {
+    fn swap_places(&mut self, top: Entity, bottom: Entity) -> Result<f32, QueryEntityError> {
+        self.query.get_many_mut([top, bottom]).map(move |query_result| {
             let [
                 (mut top_transform, HalfHeight(top_hh)),
                 (mut bot_transform, HalfHeight(bot_hh)),
@@ -37,8 +44,17 @@ fn control_pickup(
             top_transform.translation.y -= 0.01 + 2.0 * bot_hh;
             top_hh + bot_hh
         })
-    };
+    }
+}
 
+fn control_pickup(
+    mut player_query: Query<(&ActionState<InputBinding>, Entity), With<Carrier>>,
+    mut pickable_query: Query<&mut Pickable>,
+    mut carrier_query: Query<&mut Carrier>,
+    // mut swap_places: SwapPlaces,
+    rapier_context: Res<RapierContext>,
+    mut commands: Commands,
+) {
     for (action_state, player_entity) in player_query.iter_mut() {
         if !action_state.just_pressed(InputBinding::Pickup) {
             continue;
@@ -65,24 +81,29 @@ fn control_pickup(
             carrier.carrying = None;
             pickable.carried_by = None;
         } else if let Some((_offset_this, _offset_that, standing_on_entity)) = standing_on {
-            let mut pickable = some_or!(pickable_query.get_mut(standing_on_entity).ok(); continue);
+            let pickable = some_or!(pickable_query.get_mut(standing_on_entity).ok(); continue);
             let pickable_entity = standing_on_entity;
-            if let Ok(combined_half_height) = swap_places(player_entity, pickable_entity) {
-                let joint = FixedJointBuilder::new()
-                    .local_anchor1(Vec2::new(0.0, 0.01 + combined_half_height));
-                commands
-                    .entity(pickable_entity)
-                    .insert(ImpulseJoint::new(player_entity, joint));
+            // if let Ok(_combined_half_height) = swap_places.swap_places(player_entity, pickable_entity) {
+            // let joint = FixedJointBuilder::new()
+            // .local_anchor1(Vec2::new(0.0, 0.01 + combined_half_height));
+            // commands
+            // .entity(pickable_entity)
+            // .insert(ImpulseJoint::new(player_entity, joint));
+            commands.entity(pickable_entity).remove::<ImpulseJoint>();
 
-                carrier.carrying = Some(pickable_entity);
-                if let Some(old_carrier_entity) = pickable.carried_by {
-                    let mut old_carrier = carrier_query
-                        .get_mut(old_carrier_entity)
-                        .expect("Pickable says it is carried by it");
-                    old_carrier.carrying = None;
-                }
-                pickable.carried_by = Some(player_entity);
-            }
+            // carrier.carrying = Some(pickable_entity);
+            // if let Some(old_carrier_entity) = pickable.carried_by {
+            // let mut old_carrier = carrier_query
+            // .get_mut(old_carrier_entity)
+            // .expect("Pickable says it is carried by it");
+            // old_carrier.carrying = None;
+            // }
+            // pickable.carried_by = Some(player_entity);
+            commands.entity(pickable_entity).insert(ChangeCarrying {
+                carrier_entity: player_entity,
+                old_carrier_entity: pickable.carried_by,
+            });
+            // }
         }
     }
 }
@@ -115,6 +136,39 @@ fn detect_mounting(
             commands
                 .entity(pickable_entity)
                 .insert(ImpulseJoint::new(carrier_entity, joint));
+        }
+    }
+}
+
+fn apply_carrying(
+    mut pickable_query: Query<(Entity, &ChangeCarrying, &mut Pickable)>,
+    mut carrier_query: Query<&mut Carrier>,
+    mut swap_places: SwapPlaces,
+    mut commands: Commands,
+) {
+    for (
+        pickable_entity,
+        &ChangeCarrying {
+            carrier_entity,
+            old_carrier_entity,
+        },
+        mut pickable,
+    ) in pickable_query.iter_mut()
+    {
+        let mut carrier = some_or!(carrier_query.get_mut(carrier_entity).ok(); continue);
+        if let Ok(combined_hh) = swap_places.swap_places(carrier_entity, pickable_entity) {
+            let joint = FixedJointBuilder::new().local_anchor1(Vec2::new(0.0, 0.01 + combined_hh));
+            commands
+                .entity(pickable_entity)
+                .remove::<ChangeCarrying>()
+                .insert(ImpulseJoint::new(carrier_entity, joint));
+            pickable.carried_by = Some(carrier_entity);
+            carrier.carrying = Some(pickable_entity);
+            if let Some(mut old_carrier) =
+                old_carrier_entity.and_then(|e| carrier_query.get_mut(e).ok())
+            {
+                old_carrier.carrying = None;
+            }
         }
     }
 }
