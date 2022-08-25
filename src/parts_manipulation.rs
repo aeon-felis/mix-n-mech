@@ -104,27 +104,12 @@ fn control_pickup(
             if let Some(old_carrier_entity) = pickable.carried_by {
                 activator.set(old_carrier_entity, false);
             }
-            // if let Ok(_combined_half_height) = swap_places.swap_places(player_entity, pickable_entity) {
-            // let joint = FixedJointBuilder::new()
-            // .local_anchor1(Vec2::new(0.0, 0.01 + combined_half_height));
-            // commands
-            // .entity(pickable_entity)
-            // .insert(ImpulseJoint::new(player_entity, joint));
             commands.entity(pickable_entity).remove::<ImpulseJoint>();
 
-            // carrier.carrying = Some(pickable_entity);
-            // if let Some(old_carrier_entity) = pickable.carried_by {
-            // let mut old_carrier = carrier_query
-            // .get_mut(old_carrier_entity)
-            // .expect("Pickable says it is carried by it");
-            // old_carrier.carrying = None;
-            // }
-            // pickable.carried_by = Some(player_entity);
             commands.entity(pickable_entity).insert(ChangeCarrying {
                 carrier_entity: player_entity,
                 old_carrier_entity: pickable.carried_by,
             });
-            // }
         }
     }
 }
