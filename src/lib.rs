@@ -1,5 +1,6 @@
 mod camera;
 mod global_types;
+mod laser;
 mod level_progress;
 mod loading;
 mod menu;
@@ -19,6 +20,7 @@ use bevy_yoleck::{YoleckLoadingCommand, YoleckManaged, YoleckSyncWithEditorState
 
 use self::camera::CameraPlugin;
 use self::global_types::{AppState, LevelProgress, MenuState};
+use self::laser::LaserPlugin;
 use self::level_progress::LevelProgressPlugin;
 use self::loading::LoadingPlugin;
 use self::menu::MenuPlugin;
@@ -50,6 +52,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(PlayerControlPlugin);
         app.add_plugin(PartsManipulationPlugin);
         app.add_plugin(PartBehaviorPlugin);
+        app.add_plugin(LaserPlugin);
 
         app.add_system(enable_disable_physics);
         if self.is_editor {

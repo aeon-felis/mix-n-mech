@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 use leafwing_input_manager::Actionlike;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct MenuActionForKbgp;
@@ -65,4 +66,22 @@ pub struct HalfHeight(pub f32);
 #[derive(Component)]
 pub struct Activatable {
     pub active: bool,
+}
+
+#[derive(Component, PartialEq, Eq, Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum HDirection {
+    Left,
+    Right,
+}
+impl HDirection {
+    pub fn as_x(&self) -> f32 {
+        match self {
+            HDirection::Left => -1.0,
+            HDirection::Right => 1.0,
+        }
+    }
+
+    pub(crate) fn as_vec(&self) -> Vec2 {
+        Vec2::new(self.as_x(), 0.0)
+    }
 }

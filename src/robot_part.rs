@@ -4,9 +4,9 @@ use bevy_rapier2d::prelude::*;
 use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeHandler};
 use serde::{Deserialize, Serialize};
 
-use crate::global_types::{Activatable, Carrier, HalfHeight, IsMountBase, Pickable};
+use crate::global_types::{Activatable, Carrier, HDirection, HalfHeight, IsMountBase, Pickable};
 use crate::loading::GameAssets;
-use crate::part_behavior::HoverBehavior;
+use crate::part_behavior::{HoverBehavior, LaserBehavior};
 
 pub struct RobotPartPlugin;
 
@@ -30,10 +30,16 @@ pub struct RobotPart {
     position: Vec2,
     #[serde(default = "default_type")]
     part_type: RobotPartType,
+    #[serde(default = "default_direction")]
+    hdirection: HDirection,
 }
 
 fn default_type() -> RobotPartType {
     RobotPartType::Platform
+}
+
+fn default_direction() -> HDirection {
+    HDirection::Right
 }
 
 fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAssets>) {
@@ -51,9 +57,11 @@ fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAsset
 
         cmd.insert(RigidBody::Dynamic);
         cmd.insert(Collider::cuboid(0.5, 0.5 * part_height));
-        cmd.insert(ColliderMassProperties::Density(100.0));
+        cmd.insert(AdditionalMassProperties::Mass(100.0));
         cmd.insert(Velocity::default());
         cmd.insert(LockedAxes::ROTATION_LOCKED);
+
+        cmd.insert(data.hdirection);
 
         if !ctx.is_in_editor() {
             data.part_type.fill_components(&mut cmd);
@@ -77,6 +85,10 @@ fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAsset
 
 fn edit(mut edit: YoleckEdit<RobotPart>, mut _commands: Commands) {
     edit.edit(|_ctx, data, ui| {
+        ui.horizontal(|ui| {
+            ui.selectable_value(&mut data.hdirection, HDirection::Left, "<-");
+            ui.selectable_value(&mut data.hdirection, HDirection::Right, "->");
+        });
         egui::ComboBox::from_id_source("part_type")
             .selected_text(format!("{:?}", data.part_type))
             .show_ui(ui, |ui| {
@@ -134,6 +146,11 @@ impl RobotPartType {
             RobotPartType::Laser => {
                 cmd.insert(Pickable::default());
                 cmd.insert(Activatable { active: false });
+                cmd.insert(LaserBehavior {
+                    next_shot_timer: Timer::from_seconds(0.5, true),
+                    speed: 4.0,
+                    range: 3.0,
+                });
             }
         }
     }
