@@ -64,7 +64,7 @@ impl Activator<'_, '_> {
 
 fn control_pickup(
     mut player_query: Query<(&ActionState<InputBinding>, Entity), With<Carrier>>,
-    mut pickable_query: Query<&mut Pickable>,
+    mut pickable_query: Query<(&mut Pickable, &mut Transform, &mut Velocity)>,
     mut carrier_query: Query<&mut Carrier>,
     // mut swap_places: SwapPlaces,
     rapier_context: Res<RapierContext>,
@@ -90,14 +90,28 @@ fn control_pickup(
         });
         let mut carrier = carrier_query.get_mut(player_entity).unwrap();
         if let Some(pickable_entity) = carrier.carrying {
-            let mut pickable = pickable_query
+            let throw_direction = action_state
+                .axis_pair(InputBinding::Move)
+                .and_then(|input| {
+                    let x = input.x();
+                    if x.abs() < 0.5 {
+                        None
+                    } else {
+                        Some(x.signum())
+                    }
+                });
+            let throw_direction = some_or!(throw_direction; continue);
+            let (mut pickable, mut pickable_transform, mut pickable_velocity) = pickable_query
                 .get_mut(pickable_entity)
                 .expect("Player should only be able to carry pickable entities");
+            pickable_transform.translation += Vec3::new(0.75 * throw_direction, -0.2, 0.0);
+            pickable_velocity.linvel += Vec2::new(0.0, -3.0);
             commands.entity(pickable_entity).remove::<ImpulseJoint>();
             carrier.carrying = None;
             pickable.carried_by = None;
         } else if let Some((_offset_this, _offset_that, standing_on_entity)) = standing_on {
-            let pickable = some_or!(pickable_query.get_mut(standing_on_entity).ok(); continue);
+            let (pickable, _, _) =
+                some_or!(pickable_query.get_mut(standing_on_entity).ok(); continue);
             let pickable_entity = standing_on_entity;
 
             activator.set(pickable_entity, false);
