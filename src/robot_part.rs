@@ -57,6 +57,20 @@ fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAsset
 
         if !ctx.is_in_editor() {
             data.part_type.fill_components(&mut cmd);
+            cmd.with_children(|commands| {
+                let mut cmd = commands.spawn();
+                cmd.insert_bundle(SpriteBundle {
+                    sprite: Sprite {
+                        color: Color::RED.clone().set_a(0.3).to_owned(),
+                        custom_size: Some(Vec2::new(1.0, 0.01)),
+                        ..Default::default()
+                    },
+                    transform: Transform::from_xyz(0.0, -0.5 * part_height + 0.005, 10.0),
+                    ..Default::default()
+                });
+                cmd.insert(Collider::cuboid(0.1, 0.005));
+                cmd.insert(Friction::new(10000.0));
+            });
         }
     });
 }

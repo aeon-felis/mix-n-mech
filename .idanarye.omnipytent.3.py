@@ -83,6 +83,11 @@ def clippy(ctx):
 
 
 @task
+def cargo_fmt_run(ctx):
+    cargo['fmt'] & ERUN.bang
+
+
+@task
 def erase_save(ctx):
     save_dir = local.path('~/.local/share/signalscuffle')
     save_dir.delete()
