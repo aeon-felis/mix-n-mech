@@ -34,12 +34,12 @@ pub struct Player {
 
 fn populate(mut populate: YoleckPopulate<Player>, game_assets: Res<GameAssets>) {
     populate.populate(|_ctx, _data, mut cmd| {
-        cmd.insert_bundle(SpriteBundle {
-            sprite: Sprite {
+        cmd.insert_bundle(SpriteSheetBundle {
+            sprite: TextureAtlasSprite {
                 custom_size: Some(Vec2::new(1.0, 1.0)),
                 ..Default::default()
             },
-            texture: game_assets.player.clone(),
+            texture_atlas: game_assets.player.clone(),
             ..Default::default()
         });
         cmd.insert(IsPlayer);

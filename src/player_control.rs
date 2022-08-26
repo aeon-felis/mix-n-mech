@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::{ActionState, InputManagerPlugin};
-
-use crate::global_types::{AppState, InputBinding};
+use crate::global_types::{AppState, InputBinding, Carrier, IsPlayer};
 use crate::physics_utils::standing_on;
 
 pub struct PlayerControlPlugin;
@@ -11,6 +10,7 @@ impl Plugin for PlayerControlPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugin(InputManagerPlugin::<InputBinding>::default());
         app.add_system_set(SystemSet::on_update(AppState::Game).with_system(control_player));
+        app.add_system(update_player_sprite_index);
         app.insert_resource(PlayerMovementSettings {
             max_speed: 10.0,
             impulse_exponent: 4.0,
@@ -190,5 +190,17 @@ fn control_player(
             impulse *= 1.0 - uphill.powf(efficiency);
         }
         velocity.linvel += impulse;
+    }
+}
+
+fn update_player_sprite_index(
+    mut query: Query<(&mut TextureAtlasSprite, &Carrier), With<IsPlayer>>,
+) {
+    for (mut sprite, carrier) in query.iter_mut() {
+        sprite.index = if carrier.carrying.is_some() {
+            1
+        } else {
+            0
+        };
     }
 }

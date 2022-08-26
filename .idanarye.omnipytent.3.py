@@ -91,3 +91,16 @@ def cargo_fmt_run(ctx):
 def erase_save(ctx):
     save_dir = local.path('~/.local/share/signalscuffle')
     save_dir.delete()
+
+
+@task
+def move_assets_from_origs(ctx):
+    suffixes_to_move = {
+        '.png',
+    }
+    origs_dir = local.path('origs-for-assets')
+    assets_dir = local.path('assets')
+    for file in origs_dir.walk():
+        if file.suffix not in suffixes_to_move:
+            continue
+        file.move(assets_dir / file.relative_to(origs_dir))

@@ -12,8 +12,9 @@ impl Plugin for LoadingPlugin {
 
 #[derive(AssetCollection)]
 pub struct GameAssets {
+    #[asset(texture_atlas(tile_size_x = 64.0, tile_size_y = 64.0, columns = 1, rows = 2))]
     #[asset(path = "sprites/player.png")]
-    pub player: Handle<Image>,
+    pub player: Handle<TextureAtlas>,
     #[asset(texture_atlas(tile_size_x = 64.0, tile_size_y = 64.0, columns = 1, rows = 1))]
     #[asset(path = "sprites/platform.png")]
     pub platform: Handle<TextureAtlas>,
