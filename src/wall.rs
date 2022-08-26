@@ -4,6 +4,7 @@ use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeH
 use serde::{Deserialize, Serialize};
 
 use crate::global_types::CameraInclude;
+use crate::laser::Breakable;
 use crate::yoleck_utils::GRANULARITY;
 
 pub struct WallPlugin;
@@ -28,6 +29,8 @@ pub struct Wall {
     position: Vec2,
     #[serde(default = "default_size")]
     size: IVec2,
+    #[serde(default)]
+    breakable: bool,
 }
 
 fn default_size() -> IVec2 {
@@ -38,7 +41,11 @@ fn populate(mut populate: YoleckPopulate<Wall>) {
     populate.populate(|_ctx, data, mut cmd| {
         cmd.insert_bundle(SpriteBundle {
             sprite: Sprite {
-                color: Color::DARK_GRAY,
+                color: if data.breakable {
+                    Color::rgb(0.6, 0.6, 0.6)
+                } else {
+                    Color::DARK_GRAY
+                },
                 custom_size: Some(data.size.as_vec2()),
                 ..Default::default()
             },
@@ -50,11 +57,17 @@ fn populate(mut populate: YoleckPopulate<Wall>) {
             data.size.x as f32 * 0.5,
             data.size.y as f32 * 0.5,
         ));
+
+        if data.breakable {
+            cmd.insert(Breakable::default());
+        }
     });
 }
 
 fn edit(mut edit: YoleckEdit<Wall>, mut commands: Commands) {
     edit.edit(|ctx, data, ui| {
+        ui.checkbox(&mut data.breakable, "Breakable?");
+
         for move_anchor in [(false, false), (false, true), (true, false), (true, true)] {
             let mut resize_knob = ctx.knob(&mut commands, ("resize", move_anchor));
             let anchor_offset = IVec2::new(move_anchor.0 as i32, move_anchor.1 as i32).as_vec2();
