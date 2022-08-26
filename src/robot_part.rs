@@ -42,15 +42,15 @@ fn default_direction() -> HDirection {
     HDirection::Right
 }
 
-fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAssets>) {
+fn populate(mut populate: YoleckPopulate<RobotPart>, game_assets: Res<GameAssets>) {
     populate.populate(|ctx, data, mut cmd| {
         let part_height = data.part_type.height();
-        cmd.insert_bundle(SpriteBundle {
-            sprite: Sprite {
-                color: data.part_type.color(),
-                custom_size: Some(Vec2::new(1.0, part_height)),
+        cmd.insert_bundle(SpriteSheetBundle {
+            sprite: TextureAtlasSprite {
+                custom_size: Some(Vec2::new(1.0, 1.0)),
                 ..Default::default()
             },
+            texture_atlas: data.part_type.texture_atlas(&game_assets),
             ..Default::default()
         });
         cmd.insert(HalfHeight(0.5 * part_height));
@@ -67,12 +67,7 @@ fn populate(mut populate: YoleckPopulate<RobotPart>, _game_assets: Res<GameAsset
             data.part_type.fill_components(&mut cmd);
             cmd.with_children(|commands| {
                 let mut cmd = commands.spawn();
-                cmd.insert_bundle(SpriteBundle {
-                    sprite: Sprite {
-                        color: Color::RED.clone().set_a(0.3).to_owned(),
-                        custom_size: Some(Vec2::new(1.0, 0.01)),
-                        ..Default::default()
-                    },
+                cmd.insert_bundle(SpatialBundle {
                     transform: Transform::from_xyz(0.0, -0.5 * part_height + 0.005, 10.0),
                     ..Default::default()
                 });
@@ -117,17 +112,17 @@ impl RobotPartType {
 
     fn height(&self) -> f32 {
         match self {
-            RobotPartType::Platform => 0.2,
-            RobotPartType::Hover => 0.2,
-            RobotPartType::Laser => 0.6,
+            RobotPartType::Platform => 0.09375,
+            RobotPartType::Hover => 0.3125,
+            RobotPartType::Laser => 0.46875,
         }
     }
 
-    fn color(&self) -> Color {
+    fn texture_atlas(&self, game_assets: &GameAssets) -> Handle<TextureAtlas> {
         match self {
-            RobotPartType::Platform => Color::BEIGE,
-            RobotPartType::Hover => Color::BLUE,
-            RobotPartType::Laser => Color::YELLOW,
+            RobotPartType::Platform => game_assets.platform.clone(),
+            RobotPartType::Hover => game_assets.hover.clone(),
+            RobotPartType::Laser => game_assets.laser.clone(),
         }
     }
 

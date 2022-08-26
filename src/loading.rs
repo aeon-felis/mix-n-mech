@@ -14,15 +14,15 @@ impl Plugin for LoadingPlugin {
 pub struct GameAssets {
     #[asset(path = "sprites/player.png")]
     pub player: Handle<Image>,
-    // #[asset(path = "sprites/hands.png")]
-    // pub hands: Handle<Image>,
-    // #[asset(path = "sprites/zombie.png")]
-    // pub zombie: Handle<Image>,
-    // #[asset(path = "sprites/wifi.png")]
-    // pub wifi: Handle<Image>,
-    // #[asset(texture_atlas(tile_size_x = 64.0, tile_size_y = 64.0, columns = 2, rows = 1))]
-    // #[asset(path = "sprites/door.png")]
-    // pub door: Handle<TextureAtlas>,
+    #[asset(texture_atlas(tile_size_x = 64.0, tile_size_y = 64.0, columns = 1, rows = 1))]
+    #[asset(path = "sprites/platform.png")]
+    pub platform: Handle<TextureAtlas>,
+    #[asset(texture_atlas(tile_size_x = 64.0, tile_size_y = 64.0, columns = 1, rows = 2))]
+    #[asset(path = "sprites/hover.png")]
+    pub hover: Handle<TextureAtlas>,
+    #[asset(texture_atlas(tile_size_x = 64.0, tile_size_y = 64.0, columns = 1, rows = 2))]
+    #[asset(path = "sprites/laser.png")]
+    pub laser: Handle<TextureAtlas>,
     #[asset(path = "fonts/FiraSans-Bold.ttf")]
     pub font: Handle<Font>,
     #[asset(path = "levels/index.yoli")]

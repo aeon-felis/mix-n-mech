@@ -9,7 +9,7 @@ authors = ["Idan Arye <idanarye@gmail.com>"]
 [dependencies]
 bevy = "0.8"
 bevy-yoleck = { version = "0.3.0", features = ["vpeol_2d"] }
-bevy_asset_loader = "0.12.1"
+bevy_asset_loader = { version = "0.12.1", features = ["2d"] }
 bevy_egui = "0.15.1"
 bevy_pkv = "0.5.0"
 bevy_rapier2d = "0.16.1"
