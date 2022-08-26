@@ -77,7 +77,13 @@ pub struct LaserBehavior {
 }
 
 fn impl_laser(
-    mut laser_query: Query<(Entity, &Activatable, &mut LaserBehavior, &Transform, &HDirection)>,
+    mut laser_query: Query<(
+        Entity,
+        &Activatable,
+        &mut LaserBehavior,
+        &Transform,
+        &HDirection,
+    )>,
     time: Res<Time>,
     mut trigger_laser_shot_writer: EventWriter<TriggerLaserShot>,
 ) {
