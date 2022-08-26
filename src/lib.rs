@@ -1,4 +1,5 @@
 mod camera;
+mod floating_text;
 mod global_types;
 mod laser;
 mod level_progress;
@@ -13,7 +14,6 @@ mod robot_part;
 mod utils;
 mod wall;
 mod yoleck_utils;
-mod floating_text;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::RapierConfiguration;

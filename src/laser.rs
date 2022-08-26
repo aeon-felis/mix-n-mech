@@ -68,9 +68,7 @@ pub struct Breakable {
 
 impl Default for Breakable {
     fn default() -> Self {
-        Self {
-            life: 1.0,
-        }
+        Self { life: 1.0 }
     }
 }
 
@@ -82,15 +80,11 @@ fn handle_laser_hits(
 ) {
     for laser_entity in laser_query.iter() {
         for (e1, e2, _) in rapier_context.intersections_with(laser_entity) {
-            let other_entity = if e1 == laser_entity {
-                e2
-            } else {
-                e1
-            };
+            let other_entity = if e1 == laser_entity { e2 } else { e1 };
             commands.entity(laser_entity).despawn_recursive();
             if let Ok((mut breakable, mut sprite)) = breakable_query.get_mut(other_entity) {
                 breakable.life -= 0.3;
-                sprite.color.set_a(1.0 -  0.9 * (1.0 - breakable.life));
+                sprite.color.set_a(1.0 - 0.9 * (1.0 - breakable.life));
                 if breakable.life <= 0.0 {
                     commands.entity(other_entity).despawn_recursive();
                 }
