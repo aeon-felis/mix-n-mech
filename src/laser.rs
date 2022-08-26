@@ -16,6 +16,7 @@ impl Plugin for LaserPlugin {
 
 #[derive(Debug)]
 pub struct TriggerLaserShot {
+    pub ignore_entity: Entity,
     pub origin: Vec2,
     pub velocity: Vec2,
     pub range: f32,
@@ -27,18 +28,19 @@ fn shoot_laser(mut reader: EventReader<TriggerLaserShot>, mut commands: Commands
         cmd.insert_bundle(SpriteBundle {
             sprite: Sprite {
                 color: Color::YELLOW_GREEN,
-                custom_size: Some(Vec2::new(0.2, 0.2)),
+                custom_size: Some(Vec2::new(0.5, 0.2)),
                 ..Default::default()
             },
             transform: Transform::from_translation(event.origin.extend(1.0)),
             ..Default::default()
         });
         cmd.insert(RigidBody::KinematicVelocityBased);
-        cmd.insert(Collider::ball(0.1));
+        cmd.insert(Collider::cuboid(0.25, 0.1));
         cmd.insert(Sensor);
         cmd.insert(Velocity::linear(event.velocity));
 
         cmd.insert(Laser {
+            ignore_entity: event.ignore_entity,
             origin: event.origin,
             range: event.range,
         });
@@ -47,6 +49,7 @@ fn shoot_laser(mut reader: EventReader<TriggerLaserShot>, mut commands: Commands
 
 #[derive(Component)]
 pub struct Laser {
+    ignore_entity: Entity,
     origin: Vec2,
     range: f32,
 }
@@ -73,14 +76,17 @@ impl Default for Breakable {
 }
 
 fn handle_laser_hits(
-    laser_query: Query<Entity, With<Laser>>,
+    laser_query: Query<(Entity, &Laser)>,
     rapier_context: Res<RapierContext>,
     mut commands: Commands,
     mut breakable_query: Query<(&mut Breakable, &mut Sprite)>,
 ) {
-    for laser_entity in laser_query.iter() {
+    for (laser_entity, laser) in laser_query.iter() {
         for (e1, e2, _) in rapier_context.intersections_with(laser_entity) {
             let other_entity = if e1 == laser_entity { e2 } else { e1 };
+            if other_entity == laser.ignore_entity {
+                continue;
+            }
             commands.entity(laser_entity).despawn_recursive();
             if let Ok((mut breakable, mut sprite)) = breakable_query.get_mut(other_entity) {
                 breakable.life -= 0.3;

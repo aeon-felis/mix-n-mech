@@ -77,11 +77,11 @@ pub struct LaserBehavior {
 }
 
 fn impl_laser(
-    mut laser_query: Query<(&Activatable, &mut LaserBehavior, &Transform, &HDirection)>,
+    mut laser_query: Query<(Entity, &Activatable, &mut LaserBehavior, &Transform, &HDirection)>,
     time: Res<Time>,
     mut trigger_laser_shot_writer: EventWriter<TriggerLaserShot>,
 ) {
-    for (activatable, mut behavior, transform, hdirection) in laser_query.iter_mut() {
+    for (entity, activatable, mut behavior, transform, hdirection) in laser_query.iter_mut() {
         if !activatable.active {
             behavior.next_shot_timer.reset();
             continue;
@@ -89,7 +89,8 @@ fn impl_laser(
         behavior.next_shot_timer.tick(time.delta());
         if behavior.next_shot_timer.just_finished() {
             trigger_laser_shot_writer.send(TriggerLaserShot {
-                origin: transform.translation.truncate() + 0.6 * hdirection.as_vec(),
+                ignore_entity: entity,
+                origin: transform.translation.truncate() + 0.5 * hdirection.as_vec(),
                 velocity: behavior.speed * hdirection.as_vec(),
                 range: behavior.range,
             })

@@ -143,7 +143,7 @@ impl RobotPartType {
                 cmd.insert(Activatable { active: false });
                 cmd.insert(LaserBehavior {
                     next_shot_timer: Timer::from_seconds(0.5, true),
-                    speed: 4.0,
+                    speed: 10.0,
                     range: 3.0,
                 });
             }
