@@ -51,7 +51,6 @@ fn populate(mut populate: YoleckPopulate<Wall>) {
             },
             ..Default::default()
         });
-        cmd.insert(CameraInclude);
         cmd.insert(RigidBody::Fixed);
         cmd.insert(Collider::cuboid(
             data.size.x as f32 * 0.5,
@@ -60,6 +59,8 @@ fn populate(mut populate: YoleckPopulate<Wall>) {
 
         if data.breakable {
             cmd.insert(Breakable::default());
+        } else {
+            cmd.insert(CameraInclude);
         }
     });
 }
