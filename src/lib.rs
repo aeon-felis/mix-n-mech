@@ -13,12 +13,14 @@ mod robot_part;
 mod utils;
 mod wall;
 mod yoleck_utils;
+mod floating_text;
 
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::RapierConfiguration;
 use bevy_yoleck::{YoleckLoadingCommand, YoleckManaged, YoleckSyncWithEditorState};
 
 use self::camera::CameraPlugin;
+use self::floating_text::FloatingTextPlugin;
 use self::global_types::{AppState, LevelProgress, MenuState};
 use self::laser::LaserPlugin;
 use self::level_progress::LevelProgressPlugin;
@@ -45,6 +47,8 @@ impl Plugin for GamePlugin {
             is_editor: self.is_editor,
         });
         app.add_plugin(LevelProgressPlugin);
+
+        app.add_plugin(FloatingTextPlugin);
         app.add_plugin(PlayerPlugin);
         app.add_plugin(WallPlugin);
         app.add_plugin(RobotPartPlugin);
