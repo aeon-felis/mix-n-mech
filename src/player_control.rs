@@ -18,6 +18,7 @@ impl Plugin for PlayerControlPlugin {
             impulse_coefficient: 400.0,
             brake_impulse_coefficient: 800.0,
             jump_power_coefficient: 7.0,
+            uphil_vertical_cap: 7.0,
             jump_brake_coefficient: 0.02,
             start_fall_before_peak: 10.0,
             start_of_fall_range: 1.0,
@@ -54,6 +55,7 @@ struct PlayerMovementSettings {
     pub impulse_coefficient: f32,
     pub brake_impulse_coefficient: f32,
     pub jump_power_coefficient: f32,
+    pub uphil_vertical_cap: f32,
     pub jump_brake_coefficient: f32,
     pub start_fall_before_peak: f32,
     pub start_of_fall_range: f32,
@@ -128,7 +130,13 @@ fn control_player(
             }
             JumpStatus::InitiateJump => {
                 player_control.mid_jump = true;
-                velocity.linvel += Vec2::Y * player_movement_settings.jump_power_coefficient;
+                let max_vertical_impulse_allowed =
+                    player_movement_settings.uphil_vertical_cap - velocity.linvel.y;
+                if 0.0 < max_vertical_impulse_allowed {
+                    velocity.linvel += Vec2::Y
+                        * max_vertical_impulse_allowed
+                            .min(player_movement_settings.jump_power_coefficient);
+                }
             }
             JumpStatus::GoingUp => {
                 player_control.mid_jump = true;
@@ -172,7 +180,6 @@ fn control_player(
             continue;
         }
 
-        //let is_braking = target_speed.signum() as i32 != current_speed.signum() as i32;
         let is_braking = target_speed == 0.0;
 
         let impulse = target_speed - current_speed;
