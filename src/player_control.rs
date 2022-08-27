@@ -1,8 +1,8 @@
+use crate::global_types::{AppState, Carrier, InputBinding, IsPlayer};
+use crate::physics_utils::standing_on;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 use leafwing_input_manager::prelude::{ActionState, InputManagerPlugin};
-use crate::global_types::{AppState, InputBinding, Carrier, IsPlayer};
-use crate::physics_utils::standing_on;
 
 pub struct PlayerControlPlugin;
 
@@ -14,7 +14,9 @@ impl Plugin for PlayerControlPlugin {
         app.insert_resource(PlayerMovementSettings {
             max_speed: 10.0,
             impulse_exponent: 4.0,
+            brake_impulse_exponent: 3.0,
             impulse_coefficient: 400.0,
+            brake_impulse_coefficient: 800.0,
             jump_power_coefficient: 7.0,
             jump_brake_coefficient: 0.02,
             start_fall_before_peak: 10.0,
@@ -48,7 +50,9 @@ impl Default for PlayerControl {
 struct PlayerMovementSettings {
     pub max_speed: f32,
     pub impulse_exponent: f32,
+    pub brake_impulse_exponent: f32,
     pub impulse_coefficient: f32,
+    pub brake_impulse_coefficient: f32,
     pub jump_power_coefficient: f32,
     pub jump_brake_coefficient: f32,
     pub start_fall_before_peak: f32,
@@ -167,18 +171,28 @@ fn control_player(
         {
             continue;
         }
+
+        //let is_braking = target_speed.signum() as i32 != current_speed.signum() as i32;
+        let is_braking = target_speed == 0.0;
+
         let impulse = target_speed - current_speed;
         let impulse = if 1.0 < impulse.abs() {
             impulse.signum()
         } else {
             impulse.signum()
-                * impulse
-                    .abs()
-                    .powf(player_movement_settings.impulse_exponent)
+                * impulse.abs().powf(if is_braking {
+                    player_movement_settings.brake_impulse_exponent
+                } else {
+                    player_movement_settings.impulse_exponent
+                })
         };
         let mut impulse = movement_vector
             * time.delta().as_secs_f32()
-            * player_movement_settings.impulse_coefficient
+            * if is_braking {
+                player_movement_settings.brake_impulse_coefficient
+            } else {
+                player_movement_settings.impulse_coefficient
+            }
             * impulse;
         let uphill = impulse.normalize().dot(Vec2::Y);
         if 0.01 <= uphill {
@@ -197,10 +211,6 @@ fn update_player_sprite_index(
     mut query: Query<(&mut TextureAtlasSprite, &Carrier), With<IsPlayer>>,
 ) {
     for (mut sprite, carrier) in query.iter_mut() {
-        sprite.index = if carrier.carrying.is_some() {
-            1
-        } else {
-            0
-        };
+        sprite.index = if carrier.carrying.is_some() { 1 } else { 0 };
     }
 }

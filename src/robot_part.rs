@@ -56,9 +56,18 @@ fn populate(mut populate: YoleckPopulate<RobotPart>, game_assets: Res<GameAssets
         cmd.insert(HalfHeight(0.5 * part_height));
 
         cmd.insert(RigidBody::Dynamic);
-        cmd.insert(Collider::cuboid(0.5, 0.5 * part_height));
+        let radius = 0.5 * part_height;
+        cmd.insert(Collider::round_cuboid(
+            0.5 - radius,
+            0.5 * part_height - radius,
+            radius,
+        ));
         cmd.insert(AdditionalMassProperties::Mass(100.0));
         cmd.insert(Velocity::default());
+        cmd.insert(Damping {
+            linear_damping: 0.5,
+            angular_damping: 0.0,
+        });
         cmd.insert(LockedAxes::ROTATION_LOCKED);
 
         cmd.insert(data.hdirection);
