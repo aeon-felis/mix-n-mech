@@ -112,11 +112,13 @@ pub enum RobotPartType {
     Platform,
     Hover,
     Laser,
+    Stationary,
+    Rotator,
 }
 
 impl RobotPartType {
     fn list() -> &'static [RobotPartType] {
-        &[Self::Platform, Self::Hover, Self::Laser]
+        &[Self::Platform, Self::Hover, Self::Laser, Self::Stationary, Self::Rotator]
     }
 
     fn height(&self) -> f32 {
@@ -124,6 +126,8 @@ impl RobotPartType {
             RobotPartType::Platform => 0.09375,
             RobotPartType::Hover => 0.3125,
             RobotPartType::Laser => 0.46875,
+            RobotPartType::Stationary => 0.21875,
+            RobotPartType::Rotator => 0.21875,
         }
     }
 
@@ -132,6 +136,8 @@ impl RobotPartType {
             RobotPartType::Platform => game_assets.platform.clone(),
             RobotPartType::Hover => game_assets.hover.clone(),
             RobotPartType::Laser => game_assets.laser.clone(),
+            RobotPartType::Stationary => game_assets.stationary.clone(),
+            RobotPartType::Rotator => game_assets.rotator.clone(),
         }
     }
 
@@ -155,6 +161,18 @@ impl RobotPartType {
                     speed: 10.0,
                     range: 3.0,
                 });
+            }
+            RobotPartType::Stationary => {
+                cmd.insert(IsMountBase);
+                cmd.insert(Carrier::default());
+                cmd.insert(ActiveEvents::COLLISION_EVENTS);
+                cmd.insert(Activatable { active: false });
+            }
+            RobotPartType::Rotator => {
+                cmd.insert(Pickable::default());
+                cmd.insert(Carrier::default());
+                cmd.insert(ActiveEvents::COLLISION_EVENTS);
+                cmd.insert(Activatable { active: false });
             }
         }
     }
