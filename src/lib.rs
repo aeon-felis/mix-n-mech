@@ -5,6 +5,7 @@ mod laser;
 mod level_progress;
 mod loading;
 mod menu;
+mod part_activation;
 mod part_behavior;
 mod parts_manipulation;
 mod physics_utils;
@@ -26,6 +27,7 @@ use self::laser::LaserPlugin;
 use self::level_progress::LevelProgressPlugin;
 use self::loading::LoadingPlugin;
 use self::menu::MenuPlugin;
+use self::part_activation::PartActivationPlugin;
 use self::part_behavior::PartBehaviorPlugin;
 use self::parts_manipulation::PartsManipulationPlugin;
 use self::player::PlayerPlugin;
@@ -57,6 +59,7 @@ impl Plugin for GamePlugin {
         app.add_plugin(PartsManipulationPlugin);
         app.add_plugin(PartBehaviorPlugin);
         app.add_plugin(LaserPlugin);
+        app.add_plugin(PartActivationPlugin);
 
         app.add_system(enable_disable_physics);
         if self.is_editor {

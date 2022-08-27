@@ -9,23 +9,11 @@ pub struct PartBehaviorPlugin;
 
 impl Plugin for PartBehaviorPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(set_sprite_properties);
         app.add_system_set({
             SystemSet::on_update(AppState::Game)
                 .with_system(impl_hover)
                 .with_system(impl_laser)
         });
-    }
-}
-
-fn set_sprite_properties(
-    mut query: Query<(&mut TextureAtlasSprite, &HDirection, Option<&Activatable>)>,
-) {
-    for (mut sprite, hdirection, activatable) in query.iter_mut() {
-        sprite.flip_x = *hdirection == HDirection::Left;
-        if let Some(activatable) = activatable {
-            sprite.index = if activatable.active { 1 } else { 0 };
-        }
     }
 }
 

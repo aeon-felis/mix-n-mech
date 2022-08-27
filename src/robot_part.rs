@@ -4,7 +4,9 @@ use bevy_rapier2d::prelude::*;
 use bevy_yoleck::{egui, YoleckEdit, YoleckExtForApp, YoleckPopulate, YoleckTypeHandler};
 use serde::{Deserialize, Serialize};
 
-use crate::global_types::{Activatable, Carrier, HDirection, HalfHeight, IsMountBase, Pickable};
+use crate::global_types::{
+    Activatable, Carrier, HDirection, HalfHeight, IsMountBase, IsPowerSource, Pickable,
+};
 use crate::loading::GameAssets;
 use crate::part_behavior::{HoverBehavior, LaserBehavior};
 
@@ -118,7 +120,13 @@ pub enum RobotPartType {
 
 impl RobotPartType {
     fn list() -> &'static [RobotPartType] {
-        &[Self::Platform, Self::Hover, Self::Laser, Self::Stationary, Self::Rotator]
+        &[
+            Self::Platform,
+            Self::Hover,
+            Self::Laser,
+            Self::Stationary,
+            Self::Rotator,
+        ]
     }
 
     fn height(&self) -> f32 {
@@ -148,6 +156,7 @@ impl RobotPartType {
             }
             RobotPartType::Hover => {
                 cmd.insert(IsMountBase);
+                cmd.insert(IsPowerSource);
                 cmd.insert(Carrier::default());
                 cmd.insert(ActiveEvents::COLLISION_EVENTS);
                 cmd.insert(Activatable { active: false });
@@ -164,11 +173,13 @@ impl RobotPartType {
             }
             RobotPartType::Stationary => {
                 cmd.insert(IsMountBase);
+                cmd.insert(IsPowerSource);
                 cmd.insert(Carrier::default());
                 cmd.insert(ActiveEvents::COLLISION_EVENTS);
                 cmd.insert(Activatable { active: false });
             }
             RobotPartType::Rotator => {
+                cmd.insert(IsMountBase);
                 cmd.insert(Pickable::default());
                 cmd.insert(Carrier::default());
                 cmd.insert(ActiveEvents::COLLISION_EVENTS);

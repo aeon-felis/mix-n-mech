@@ -61,6 +61,9 @@ pub struct Carrier {
 pub struct IsMountBase;
 
 #[derive(Component)]
+pub struct IsPowerSource;
+
+#[derive(Component)]
 pub struct HalfHeight(pub f32);
 
 #[derive(Component)]
