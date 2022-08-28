@@ -160,7 +160,7 @@ impl RobotPartType {
                 cmd.insert(Carrier::default());
                 cmd.insert(ActiveEvents::COLLISION_EVENTS);
                 cmd.insert(Activatable { active: false });
-                cmd.insert(HoverBehavior { range: 0.5 });
+                cmd.insert(HoverBehavior { range: 0.6 });
             }
             RobotPartType::Laser => {
                 cmd.insert(Pickable::default());
