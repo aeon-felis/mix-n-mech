@@ -68,6 +68,7 @@ fn add_player_input(mut populate: YoleckPopulate<Player>) {
             action_state: Default::default(),
             input_map: InputMap::default()
                 .insert(VirtualDPad::arrow_keys(), InputBinding::Move)
+                .insert(VirtualDPad::wasd(), InputBinding::Move)
                 .insert(VirtualDPad::dpad(), InputBinding::Move)
                 .insert(DualAxis::left_stick(), InputBinding::Move)
                 .insert(KeyCode::Space, InputBinding::Pickup)
