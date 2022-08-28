@@ -7,7 +7,7 @@ use leafwing_input_manager::prelude::ActionState;
 
 use crate::global_types::{AppState, Carrier, HalfHeight, InputBinding, IsMountBase, Pickable};
 use crate::physics_utils::standing_on;
-use crate::utils::{entities_ordered_by_type, some_or};
+use crate::utils::some_or;
 
 pub struct PartsManipulationPlugin;
 
@@ -112,20 +112,32 @@ fn detect_mounting(
     mut carrier_query: Query<(&mut Carrier, &HalfHeight), With<IsMountBase>>,
     mut pickable_query: Query<(&mut Pickable, &HalfHeight)>,
     mut transform_query: Query<&mut Transform>,
+    global_transform_query: Query<&GlobalTransform>,
     mut commands: Commands,
 ) {
     for event in reader.iter() {
         if let &CollisionEvent::Started(e1, e2, _) = event {
-            let [carrier_entity, pickable_entity] = some_or!(
-                entities_ordered_by_type!([e1, e2], carrier_query, pickable_query);
-                continue);
+            let [carrier_entity, pickable_entity] =
+                if let Ok(transforms) = global_transform_query.get_many([e1, e2]) {
+                    let [t1, t2] = transforms.map(|t| t.translation());
+                    if 0.5 < (t1.x - t2.x).abs() {
+                        continue;
+                    }
+                    if t1.y < t2.y {
+                        [e1, e2]
+                    } else {
+                        [e2, e1]
+                    }
+                } else {
+                    continue;
+                };
             let (mut carrier, HalfHeight(carrier_hh)) =
-                carrier_query.get_mut(carrier_entity).unwrap();
+                some_or!(carrier_query.get_mut(carrier_entity).ok(); continue);
             if carrier.carrying.is_some() {
                 continue;
             }
             let (mut pickable, HalfHeight(pickable_hh)) =
-                pickable_query.get_mut(pickable_entity).unwrap();
+                some_or!(pickable_query.get_mut(pickable_entity).ok(); continue);
             if pickable.carried_by.is_some() {
                 continue;
             }
