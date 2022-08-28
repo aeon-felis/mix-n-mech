@@ -36,6 +36,13 @@ pub struct GameAssets {
     #[asset(path = "sprites/rotator.png")]
     pub rotator: Handle<TextureAtlas>,
 
+    #[asset(path = "sprites/door_key.png")]
+    pub door_key: Handle<Image>,
+
+    #[asset(texture_atlas(tile_size_x = 64.0, tile_size_y = 64.0, columns = 1, rows = 2))]
+    #[asset(path = "sprites/door.png")]
+    pub door: Handle<TextureAtlas>,
+
     #[asset(path = "fonts/FiraSans-Bold.ttf")]
     pub font: Handle<Font>,
 

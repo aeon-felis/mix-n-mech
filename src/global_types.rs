@@ -95,3 +95,11 @@ impl HDirection {
         Vec2::new(self.as_x(), 0.0)
     }
 }
+
+#[derive(Component)]
+pub struct IsDoorKey;
+
+#[derive(Component)]
+pub struct OpenableDoor {
+    pub open: bool,
+}

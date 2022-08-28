@@ -1,4 +1,6 @@
 mod camera;
+mod door;
+mod door_key;
 mod floating_text;
 mod global_types;
 mod laser;
@@ -21,6 +23,8 @@ use bevy_rapier2d::prelude::RapierConfiguration;
 use bevy_yoleck::{YoleckLoadingCommand, YoleckManaged, YoleckSyncWithEditorState};
 
 use self::camera::CameraPlugin;
+use self::door::DoorPlugin;
+use self::door_key::DoorKeyPlugin;
 use self::floating_text::FloatingTextPlugin;
 use self::global_types::{AppState, LevelProgress, MenuState};
 use self::laser::LaserPlugin;
@@ -54,6 +58,8 @@ impl Plugin for GamePlugin {
         app.add_plugin(PlayerPlugin);
         app.add_plugin(WallPlugin);
         app.add_plugin(RobotPartPlugin);
+        app.add_plugin(DoorKeyPlugin);
+        app.add_plugin(DoorPlugin);
 
         app.add_plugin(PlayerControlPlugin);
         app.add_plugin(PartsManipulationPlugin);
