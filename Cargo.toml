@@ -6,6 +6,10 @@ license = "MIT OR Apache-2.0"
 publish = false
 authors = ["Idan Arye <idanarye@gmail.com>"]
 
+[profile.release]
+lto = true
+codegen-units = 1
+
 [dependencies]
 bevy = "0.8"
 bevy-yoleck = { version = "0.3.0", features = ["vpeol_2d"] }
