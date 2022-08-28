@@ -89,7 +89,7 @@ def cargo_fmt_run(ctx):
 
 @task
 def erase_save(ctx):
-    save_dir = local.path('~/.local/share/signalscuffle')
+    save_dir = local.path('~/.local/share/mixnmech')
     save_dir.delete()
 
 
