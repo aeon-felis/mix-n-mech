@@ -2,8 +2,9 @@ use bevy::prelude::*;
 use bevy::utils::HashSet;
 use bevy_rapier2d::prelude::*;
 
-use crate::global_types::{Activatable, AppState, HDirection};
+use crate::global_types::{Activatable, AppState, Carrier, HDirection};
 use crate::laser::TriggerLaserShot;
+use crate::utils::some_or;
 
 pub struct PartBehaviorPlugin;
 
@@ -13,6 +14,7 @@ impl Plugin for PartBehaviorPlugin {
             SystemSet::on_update(AppState::Game)
                 .with_system(impl_hover)
                 .with_system(impl_laser)
+                .with_system(impl_rotator)
         });
     }
 }
@@ -81,13 +83,43 @@ fn impl_laser(
             continue;
         }
         behavior.next_shot_timer.tick(time.delta());
-        if behavior.next_shot_timer.just_finished() {
-            trigger_laser_shot_writer.send(TriggerLaserShot {
-                ignore_entity: entity,
-                origin: transform.translation.truncate() + 0.5 * hdirection.as_vec(),
-                velocity: behavior.speed * hdirection.as_vec(),
-                range: behavior.range,
-            })
+        if !behavior.next_shot_timer.just_finished() {
+            continue;
+        }
+        trigger_laser_shot_writer.send(TriggerLaserShot {
+            ignore_entity: entity,
+            origin: transform.translation.truncate() + 0.5 * hdirection.as_vec(),
+            velocity: behavior.speed * hdirection.as_vec(),
+            range: behavior.range,
+        })
+    }
+}
+
+#[derive(Component)]
+pub struct RotatorBehavior {
+    pub next_turn_timer: Timer,
+}
+
+fn impl_rotator(
+    mut rotator_query: Query<(Entity, &Activatable, &mut RotatorBehavior)>,
+    mut rotating_part_query: Query<(&mut HDirection, Option<&Carrier>)>,
+    time: Res<Time>,
+) {
+    for (mut entity, activatable, mut behavior) in rotator_query.iter_mut() {
+        if !activatable.active {
+            behavior.next_turn_timer.reset();
+            continue;
+        }
+        behavior.next_turn_timer.tick(time.delta());
+        if !behavior.next_turn_timer.just_finished() {
+            continue;
+        }
+        loop {
+            let (mut hdirection, carrier) =
+                some_or!(rotating_part_query.get_mut(entity).ok(); break);
+            *hdirection = hdirection.switch();
+            let carrier = some_or!(carrier; break);
+            entity = some_or!(carrier.carrying; break);
         }
     }
 }

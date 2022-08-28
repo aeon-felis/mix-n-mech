@@ -8,7 +8,7 @@ use crate::global_types::{
     Activatable, Carrier, HDirection, HalfHeight, IsMountBase, IsPowerSource, Pickable,
 };
 use crate::loading::GameAssets;
-use crate::part_behavior::{HoverBehavior, LaserBehavior};
+use crate::part_behavior::{HoverBehavior, LaserBehavior, RotatorBehavior};
 
 pub struct RobotPartPlugin;
 
@@ -184,6 +184,9 @@ impl RobotPartType {
                 cmd.insert(Carrier::default());
                 cmd.insert(ActiveEvents::COLLISION_EVENTS);
                 cmd.insert(Activatable { active: false });
+                cmd.insert(RotatorBehavior {
+                    next_turn_timer: Timer::from_seconds(1.0, true),
+                });
             }
         }
     }

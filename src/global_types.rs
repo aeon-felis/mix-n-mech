@@ -84,6 +84,13 @@ impl HDirection {
         }
     }
 
+    pub fn switch(&self) -> HDirection {
+        match self {
+            HDirection::Left => HDirection::Right,
+            HDirection::Right => HDirection::Left,
+        }
+    }
+
     pub(crate) fn as_vec(&self) -> Vec2 {
         Vec2::new(self.as_x(), 0.0)
     }
