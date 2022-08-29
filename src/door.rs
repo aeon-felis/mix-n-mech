@@ -17,7 +17,7 @@ impl Plugin for DoorPlugin {
                 .populate_with(populate)
                 .with(crate::yoleck_utils::position_adapter(
                     |door: &mut Door| (&mut door.position, IVec2::ONE),
-                    0.0,
+                    -0.1,
                 ))
         });
         app.add_system_set({
